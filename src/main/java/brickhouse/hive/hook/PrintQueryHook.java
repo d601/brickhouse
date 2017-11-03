@@ -16,7 +16,8 @@ public class PrintQueryHook implements PreExecute {
                     Set<WriteEntity> writes, UserGroupInformation ugi) throws Exception {
         HiveHistory history = session.getHiveHistory();
 
-        session.out.println(" PreExecute Query " + session.getCmd());
+        // session.out.println(" PreExecute Query " + session.getCmd());
+        // TODO: session.getCmd() was moved elsewhere in hive 2. Figure out where it was moved.
 
     }
 

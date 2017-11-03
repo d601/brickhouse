@@ -40,14 +40,63 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <apache.hadoop.version>0.20.2</apache.hadoop.version>
-        <apache.hbase.version>0.92.1</apache.hbase.version>
-        <apache.hive.version>0.10.0</apache.hive.version>
-        <codehaus.jackson.version>1.8.8</codehaus.jackson.version>
+        <apache.hadoop.version>2.7.3</apache.hadoop.version>
+        <apache.hbase.version>1.0.0-cdh5.4.8</apache.hbase.version>
+        <apache.hive.version>2.3.0</apache.hive.version>
+        <jackson.version>1.9.13</jackson.version>
     </properties>
 
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>2.3</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <relocations>
+                                <relocation>
+                                    <pattern>com.google.common</pattern>
+                                    <shadedPattern>com.klout.shaded.com.google.common</shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>com.google.thirdparty</pattern>
+                                    <shadedPattern>com.klout.shaded.com.google.thirdparty</shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>org.codehaus.jackson</pattern>
+                                    <shadedPattern>com.klout.shaded.org.codehaus.jackson</shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>com.clearspring.analytics</pattern>
+                                    <shadedPattern>com.klout.shaded.com.clearspring.analytics</shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>org.joda</pattern>
+                                    <shadedPattern>com.klout.shaded.org.joda</shadedPattern>
+                                </relocation>
+                            </relocations>
+                           <filters>
+                               <filter>
+                                   <artifact>*:*</artifact>
+                                   <excludes>
+                                       <exclude>META-INF/*.SF</exclude>
+                                       <exclude>META-INF/*.DSA</exclude>
+                                       <exclude>META-INF/*.RSA</exclude>
+                                   </excludes>
+                                </filter>
+                            </filters>
+                            <minimizeJar>true</minimizeJar>
+                        </configuration>
+                      </execution>
+                </executions>
+            </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-site-plugin</artifactId>
@@ -161,6 +210,12 @@
     </reporting>
 
     <dependencies>
+        <!-- Guava order matters so we put it on top. -->
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>18.0</version>
+        </dependency>
 
         <!-- Hive -->
         <dependency>
@@ -168,12 +223,14 @@
             <artifactId>hive-serde</artifactId>
             <optional>true</optional>
             <version>${apache.hive.version}</version>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>
             <groupId>org.apache.hive</groupId>
             <artifactId>hive-common</artifactId>
             <version>${apache.hive.version}</version>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>
@@ -186,24 +243,21 @@
                     <artifactId>jdo2-api</artifactId>
                 </exclusion>
             </exclusions>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>
             <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-core</artifactId>
+            <artifactId>hadoop-client</artifactId>
             <version>${apache.hadoop.version}</version>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>
             <groupId>org.apache.hbase</groupId>
-            <artifactId>hbase</artifactId>
+            <artifactId>hbase-client</artifactId>
             <version>${apache.hbase.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>18.0</version>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>
@@ -226,25 +280,25 @@
         <dependency>
             <groupId>org.codehaus.jackson</groupId>
             <artifactId>jackson-core-asl</artifactId>
-            <version>${codehaus.jackson.version}</version>
+            <version>${jackson.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.codehaus.jackson</groupId>
             <artifactId>jackson-jaxrs</artifactId>
-            <version>${codehaus.jackson.version}</version>
+            <version>${jackson.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.codehaus.jackson</groupId>
             <artifactId>jackson-xc</artifactId>
-            <version>${codehaus.jackson.version}</version>
+            <version>${jackson.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.codehaus.jackson</groupId>
             <artifactId>jackson-mapper-asl</artifactId>
-            <version>${codehaus.jackson.version}</version>
+            <version>${jackson.version}</version>
         </dependency>
 
         <dependency>
@@ -253,33 +307,17 @@
             <version>4.8</version>
             <scope>test</scope>
         </dependency>
-
-
+        
     </dependencies>
 
-    <!--
-       <distributionManagement>
-         <repository>
-           <id>sonatype-nexus-staging</id>
-            <name>Nexus Staging Repository</name>
-            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-         </repository>
-     </distributionManagement>
-     -->
 
-
-    <distributionManagement>
+    
+    <repositories>
         <repository>
-            <id>central</id>
-            <name>maven-repo-releases</name>
-            <url>http://maven.klout:8081/artifactory/libs-release-local</url>
+            <id>cloudera</id>
+            <name>Cloudera repo</name>
+            <url>http://repository.cloudera.com/artifactory/cloudera-repos</url>
+            <layout>default</layout>
         </repository>
-        <snapshotRepository>
-            <id>snapshots</id>
-            <name>maven-repo-snapshots</name>
-            <url>http://maven.klout:8081/artifactory/libs-snapshot-local</url>
-        </snapshotRepository>
-    </distributionManagement>
-
-
+    </repositories>
 </project>
